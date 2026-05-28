@@ -59,8 +59,14 @@ async function generateFlyer(data, outputPath) {
       window.render();
     }, data);
 
-    // Esperar imagen hero + QR
-    await page.waitForTimeout(1500);
+    // Esperar a que la imagen hero cargue (o falle) antes del screenshot
+    await page.waitForFunction(function() {
+      var img = document.getElementById('hero-img');
+      return img && (img.complete || img.style.display === 'none');
+    }, { timeout: 10000 }).catch(function() {});
+
+    // Pequeña pausa para QR y fuentes
+    await page.waitForTimeout(500);
 
     const flyer = await page.locator("#flyer");
     await flyer.screenshot({ path: outputPath, type: "png" });

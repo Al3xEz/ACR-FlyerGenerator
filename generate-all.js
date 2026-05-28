@@ -1,8 +1,8 @@
 /**
  * ACR - Generador batch de torneos
- * Lee tournaments/{slug}/data.json para cada torneo y genera flyer.png + post.md
+ * Lee tournaments/{slug}/data.json y genera flyer.png + post.md
  * Uso: node generate-all.js
- *      node generate-all.js --slug 496-por-la-plata-xii   (solo uno)
+ *      node generate-all.js --slug 496-por-la-plata-xii
  */
 
 const { chromium } = require('playwright')
@@ -13,7 +13,6 @@ const http = require('http')
 const TOURNAMENTS_DIR = path.resolve(__dirname, '../tournaments')
 const SERVE_DIR = path.resolve(__dirname)
 
-// ── HTTP server para que Chromium cargue los scripts locales ─────────────────
 function startServer() {
   const mimeTypes = {
     '.html': 'text/html',
@@ -42,7 +41,6 @@ function startServer() {
   })
 }
 
-// ── Genera un flyer PNG a partir de los datos del torneo ─────────────────────
 async function generateFlyer(tournamentData, outputPath, port) {
   const browser = await chromium.launch()
   try {
@@ -54,7 +52,16 @@ async function generateFlyer(tournamentData, outputPath, port) {
       Object.assign(window.DATA, data)
       window.render()
     }, tournamentData)
-    await page.waitForTimeout(1500)
+
+    // Esperar a que la imagen hero cargue (o falle) antes del screenshot
+    await page.waitForFunction(function() {
+      var img = document.getElementById('hero-img')
+      return img && (img.complete || img.style.display === 'none')
+    }, { timeout: 10000 }).catch(function() {})
+
+    // Pausa para QR y fuentes
+    await page.waitForTimeout(500)
+
     const flyer = await page.locator('#flyer')
     await flyer.screenshot({ path: outputPath, type: 'png' })
   } finally {
@@ -62,7 +69,6 @@ async function generateFlyer(tournamentData, outputPath, port) {
   }
 }
 
-// ── Escribe post.md con caption y hashtags ───────────────────────────────────
 function writePostMd(t, folderPath) {
   const title = t.titulo1 + (t.titulo2 ? ' ' + t.titulo2 : '')
   const lines = [
@@ -91,22 +97,18 @@ function writePostMd(t, folderPath) {
   fs.writeFileSync(path.join(folderPath, 'post.md'), lines.join('\n'), 'utf8')
 }
 
-// ── Lee todos los data.json de tournaments/ ──────────────────────────────────
 function getTournaments(onlySlug) {
   if (!fs.existsSync(TOURNAMENTS_DIR)) return []
   return fs.readdirSync(TOURNAMENTS_DIR)
     .filter(function(name) {
       if (onlySlug && name !== onlySlug) return false
-      const dataFile = path.join(TOURNAMENTS_DIR, name, 'data.json')
-      return fs.existsSync(dataFile)
+      return fs.existsSync(path.join(TOURNAMENTS_DIR, name, 'data.json'))
     })
     .map(function(name) {
-      const dataFile = path.join(TOURNAMENTS_DIR, name, 'data.json')
-      return JSON.parse(fs.readFileSync(dataFile, 'utf8'))
+      return JSON.parse(fs.readFileSync(path.join(TOURNAMENTS_DIR, name, 'data.json'), 'utf8'))
     })
 }
 
-// ── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
   const args = process.argv.slice(2)
   let onlySlug = null
@@ -115,15 +117,12 @@ async function main() {
   }
 
   const tournaments = getTournaments(onlySlug)
-
   if (tournaments.length === 0) {
     console.log('No se encontraron data.json en tournaments/')
     return
   }
 
   console.log('Generando materiales para ' + tournaments.length + ' torneo(s)...')
-
-  // Un solo server para todos los torneos
   const { server, port } = await startServer()
 
   try {
@@ -133,13 +132,12 @@ async function main() {
 
       fs.mkdirSync(folderPath, { recursive: true })
 
-      // post.md
       writePostMd(t, folderPath)
       console.log('[OK] post.md  -> tournaments/' + t.slug + '/')
 
-      // flyer.png
       const flyerData = {
         id: t.id,
+        imagen: t.imagen || '',
         titulo1: t.titulo1,
         titulo2: t.titulo2 || '',
         fecha: t.fecha,
