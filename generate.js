@@ -3,50 +3,75 @@
  * Genera un PNG 1080x1350 a partir del template HTML + datos del torneo.
  *
  * Uso:
- *   node generate.js --data '{"id":"496","nombre":"..."}' --output ../img_torneo.png
- *   node generate.js --file data.json --output ../img_torneo.png
- *
- * Requiere: npm install playwright
- * Primera vez: npx playwright install chromium
+ *   node generate.js --data '{"id":"496","titulo1":"..."}' --output ../img.png
  */
 
 const { chromium } = require("playwright");
 const path = require("path");
 const fs = require("fs");
+const http = require("http");
 
-async function generateFlyer(data, outputPath) {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
+const SERVE_DIR = path.resolve(__dirname);
 
-  // Viewport exacto del flyer
-  await page.setViewportSize({ width: 1080, height: 1350 });
-
-  // Cargar el template
-  const templatePath = path.resolve(__dirname, "index.html");
-  await page.goto(`file://${templatePath}`);
-
-  // Inyectar los datos del torneo (reemplaza el objeto DATA del HTML)
-  await page.evaluate((tournamentData) => {
-    // Override DATA and re-render
-    window.DATA = tournamentData;
-    window.render();
-  }, data);
-
-  // Esperar a que la imagen del torneo y el QR carguen
-  await page.waitForTimeout(1500);
-
-  // Screenshot del elemento #flyer exactamente
-  const flyer = await page.locator("#flyer");
-  await flyer.screenshot({
-    path: outputPath,
-    type: "png",
+function startServer() {
+  const mimeTypes = {
+    ".html": "text/html",
+    ".js":   "text/javascript",
+    ".css":  "text/css",
+    ".png":  "image/png",
+    ".webp": "image/webp",
+    ".woff2":"font/woff2"
+  };
+  return new Promise(function(resolve) {
+    const server = http.createServer(function(req, res) {
+      const filePath = path.join(SERVE_DIR, req.url.split("?")[0]);
+      try {
+        const content = fs.readFileSync(filePath);
+        const ext = path.extname(filePath);
+        res.writeHead(200, { "Content-Type": mimeTypes[ext] || "application/octet-stream" });
+        res.end(content);
+      } catch (e) {
+        res.writeHead(404);
+        res.end();
+      }
+    });
+    server.listen(0, "127.0.0.1", function() {
+      resolve({ server: server, port: server.address().port });
+    });
   });
-
-  await browser.close();
-  console.log(`✓ Flyer generado: ${outputPath}`);
 }
 
-// ── CLI ──────────────────────────────────────────────────────────────────────
+async function generateFlyer(data, outputPath) {
+  const { server, port } = await startServer();
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    await page.setViewportSize({ width: 1080, height: 1350 });
+
+    await page.goto("http://127.0.0.1:" + port + "/index.html", { waitUntil: "load" });
+
+    // Esperar a que render() este disponible
+    await page.waitForFunction(function() { return typeof window.render === "function"; });
+
+    // Sobreescribir DATA y re-renderizar
+    await page.evaluate(function(tournamentData) {
+      Object.assign(window.DATA, tournamentData);
+      window.render();
+    }, data);
+
+    // Esperar imagen hero + QR
+    await page.waitForTimeout(1500);
+
+    const flyer = await page.locator("#flyer");
+    await flyer.screenshot({ path: outputPath, type: "png" });
+
+    console.log("Flyer generado: " + outputPath);
+  } finally {
+    await browser.close();
+    server.close();
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   let data, outputPath;
@@ -59,11 +84,10 @@ async function main() {
 
   if (!data || !outputPath) {
     console.error("Uso: node generate.js --data '{...}' --output ruta.png");
-    console.error("  o: node generate.js --file data.json --output ruta.png");
     process.exit(1);
   }
 
   await generateFlyer(data, outputPath);
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+main().catch(function(err) { console.error(err); process.exit(1); });

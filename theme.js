@@ -36,11 +36,23 @@ const ICONS = {
     <path fill="ACCENT" stroke="none" d="M343.3 432H169.13c-15.6 0-20-18-9.06-29.16C186.55 376 240 356.78 240 326V224c0-19.85-38-35-61.51-67.2-3.88-5.31-3.49-12.8 6.37-12.8h142.73c8.41 0 10.23 7.43 6.4 12.75C310.82 189 272 204.05 272 224v102c0 30.53 55.71 47 80.4 76.87 9.95 12.04 6.47 29.13-9.1 29.13z"/>
   </svg>`,
 
-  clock: `<svg width="SIZE" height="SIZE" viewBox="0 0 512 512" fill="none"
-    stroke="ACCENT" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M416.07 272a160 160 0 10-160 160 160 160 0 00160-160z"/>
-    <path d="M256.07 160v112h-80"/>
-  </svg>`,
+  clock: `<svg width="SIZE" height="SIZE" viewBox="0 0 512 512" fill="none" stroke="ACCENT" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
+          <path
+            d='M416.07 272a160 160 0 10-160 160 160 160 0 00160-160zM142.12 91.21A46.67 46.67 0 00112 80l-2.79.08C83.66 81.62 64 104 64.07 131c0 13.21 4.66 19.37 10.88 27.23a4.55 4.55 0 003.24 1.77h.88a3.23 3.23 0 002.54-1.31L142.38 99a5.38 5.38 0 001.55-4 5.26 5.26 0 00-1.81-3.79zM369.88 91.21A46.67 46.67 0 01400 80l2.79.08C428.34 81.62 448 104 447.93 131c0 13.21-4.66 19.37-10.88 27.23a4.55 4.55 0 01-3.24 1.76h-.88a3.23 3.23 0 01-2.54-1.31L369.62 99a5.38 5.38 0 01-1.55-4 5.26 5.26 0 011.81-3.79z'
+            fill='none'
+            stroke='ACCENT'
+            strokeMiterlimit='10'
+            strokeWidth='32'
+          />
+          <path
+            fill='none'
+            stroke='ACCENT'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth='32'
+            d='M256.07 160v112h-80M416.07 432l-40-40M96.07 432l40-40'
+          />
+        </svg>`,
 
   people: `<svg width="SIZE" height="SIZE" viewBox="0 0 512 512" fill="none"
     stroke="ACCENT" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
