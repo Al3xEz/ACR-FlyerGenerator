@@ -5,12 +5,12 @@
 /* ════════════════════════════════════════════════
    COLOR DE ACENTO DINÁMICO
    JS actualiza --accent según el tipo de torneo:
-     blitz   → #EAB308
-     rapido  → #14C38E
-     clasico → #5A94FF
+     blitz   → #e17100
+     rapido  → #009966
+     clasico → #0092b8
 ════════════════════════════════════════════════ */
 :root {
-  --accent: #EAB308;
+  --accent: #e17100;
 }
 
 .accent         { color:            var(--accent) !important; }

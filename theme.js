@@ -4,19 +4,19 @@
 
 const TIPOS = {
   blitz: {
-    accent: '#EAB308',
+    accent: '#e17100',
     label: 'BLITZ',
     ritmoLabel: 'FORMATO',
     icon: 'blitz'
   },
   rapido: {
-    accent: '#14C38E',
+    accent: '#009966',
     label: 'RÁPIDO',
     ritmoLabel: 'RITMO',
     icon: 'hourglass'
   },
   clasico: {
-    accent: '#5A94FF',
+    accent: '#0092b8',
     label: 'CLÁSICO',
     ritmoLabel: 'MODALIDAD',
     icon: 'clock'
